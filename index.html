@@ -194,7 +194,7 @@
       </div>
       <section class="section bookshelf" id="books" aria-labelledby="shelf-title">
         <div class="wrap">
-          <div class="section-head">
+          <div class="section-head" data-reveal>
             <div>
               <div class="eyebrow chapter"><span></span> Capy Club paperbacks</div>
               <h2 id="shelf-title">Shop the coloring books<span>.</span></h2>
@@ -202,7 +202,7 @@
             <p>Preview three pages from each book before you pick one for your studio or your own coloring shelf.</p>
           </div>
           <div class="shelf-spread">
-            <article class="shelf-book">
+            <article class="shelf-book" data-reveal style="--i: 0">
               <img
                 loading="lazy"
                 src="art/pilates-book.webp"
@@ -236,7 +236,7 @@
                 </button>
               </div>
             </article>
-            <article class="shelf-book">
+            <article class="shelf-book" data-reveal style="--i: 1">
               <img
                 loading="lazy"
                 src="art/nap-book.webp"
@@ -274,9 +274,52 @@
           <p class="shop-note">Preview prices · Online checkout opens at launch</p>
         </div>
       </section>
+      <section class="color-show" id="color-show" aria-labelledby="color-show-title">
+        <div class="color-pin">
+          <div class="wrap color-layout">
+            <div class="color-copy">
+              <div class="eyebrow chapter"><span></span> Pilates, Please · Page 01</div>
+              <h2 id="color-show-title">Watch Capy<br /><em>color in.</em></h2>
+              <p class="color-lede">Keep scrolling. A few pencils, sixty-four spaces, one very relaxed capybara.</p>
+              <div class="color-step" aria-live="polite">
+                <span class="step-num">01</span>
+                <span class="step-text">First, the window.</span>
+              </div>
+              <div class="color-meter" aria-hidden="true">
+                <span class="meter-label">Spaces colored</span>
+                <span class="meter-count"><b class="count-now">0</b> / <span class="count-all">64</span></span>
+                <span class="meter-bar"><span></span></span>
+                <span class="meter-pencil"><i></i><span class="pencil-now">Pool blue</span></span>
+              </div>
+              <button class="btn btn-coral color-cta" data-scene="0">
+                <svg class="icon" aria-hidden="true"><use href="#i-pencil" /></svg> Now you try
+              </button>
+            </div>
+            <div class="color-page">
+              <span class="tape" aria-hidden="true"></span>
+              <div class="color-paper">
+                <img
+                  class="color-fallback"
+                  src="art/reformer.webp"
+                  width="669"
+                  height="831"
+                  loading="lazy"
+                  alt="Pilates, Please page 01: Capy sitting on a Pilates reformer by an arched studio window."
+                />
+                <canvas class="color-canvas" width="669" height="831" aria-hidden="true"></canvas>
+                <svg class="color-pencil" viewBox="0 0 48 48" aria-hidden="true">
+                  <path class="pencil-body" d="M14 34 36 12l6 6-22 22-8 2z" />
+                  <path class="pencil-tip" d="m12 42 2-8 6 6z" />
+                  <path class="pencil-end" d="m36 12 3-3a2 2 0 0 1 3 0l3 3a2 2 0 0 1 0 3l-3 3z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section class="sketch section" id="sketchbook">
         <div class="wrap">
-          <div class="section-head">
+          <div class="section-head" data-reveal>
             <div>
               <div class="eyebrow chapter"><span></span> Pilates, Please · Sample pages</div>
               <h2>Inside the studio<span>.</span></h2>
@@ -284,7 +327,7 @@
             <p>Try a sample from the first book. Pick a studio scene, tap to color it, and save your page.</p>
           </div>
           <div class="gallery">
-            <button class="scene-card peach" data-scene="0">
+            <button class="scene-card peach" data-reveal style="--i: 0" data-scene="0">
               <span class="scene-window"
                 ><img
                   src="art/reformer.webp" width="669" height="831"
@@ -297,7 +340,7 @@
               ><span class="scene-caption"
                 ><span>Reformer time</span><svg class="icon" aria-hidden="true"><use href="#i-up" /></svg
               ></span></button
-            ><button class="scene-card sage" data-scene="1">
+            ><button class="scene-card sage" data-reveal style="--i: 1" data-scene="1">
               <span class="scene-window"
                 ><img src="art/ring.webp" width="670" height="831" alt="Capy holding a Pilates ring on the studio mat" loading="lazy" /><span
                   class="page-tag"
@@ -308,7 +351,7 @@
               ><span class="scene-caption"
                 ><span>The Pilates ring</span><svg class="icon" aria-hidden="true"><use href="#i-up" /></svg
               ></span></button
-            ><button class="scene-card lilac" data-scene="2">
+            ><button class="scene-card lilac" data-reveal style="--i: 2" data-scene="2">
               <span class="scene-window"
                 ><img
                   src="art/cooldown.webp" width="669" height="831"
@@ -327,7 +370,7 @@
       </section>
       <section class="studio-retail section" id="for-studios" aria-labelledby="retail-title">
         <div class="wrap retail-layout">
-          <div class="retail-intro">
+          <div class="retail-intro" data-reveal>
             <div class="eyebrow chapter"><span></span> For Pilates studios</div>
             <h2 id="retail-title">A place on your<br /><em>studio shelf.</em></h2>
             <p>
@@ -354,7 +397,7 @@
           </div>
         </div>
         <div class="wrap">
-          <form class="inquiry" id="studio-inquiry" novalidate>
+          <form class="inquiry" id="studio-inquiry" novalidate data-reveal>
             <div class="inquiry-intro">
               <div class="eyebrow">Wholesale &amp; studio orders</div>
               <h3>Stock Capy at your studio.</h3>
@@ -410,7 +453,7 @@
       </section>
       <section class="store section" id="shop">
         <div class="wrap">
-          <div class="section-head">
+          <div class="section-head" data-reveal>
             <div>
               <div class="eyebrow chapter"><span></span> Capy Club · Studio collection</div>
               <h2>Pilates merch<span>.</span></h2>
@@ -421,7 +464,7 @@
             </p>
           </div>
           <div class="products">
-            <button class="product" data-product="socks">
+            <button class="product" data-reveal style="--i: 0" data-product="socks">
               <span class="product-img"
                 ><img src="art/socks.webp" width="627" height="627" alt="Pilates Grip Socks with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
@@ -429,7 +472,7 @@
                 ></span
               ><span class="product-line"><strong>Pilates Grip Socks</strong><span>$10</span></span
               ><span class="product-sub">Cream & matcha</span></button
-            ><button class="product" data-product="towel">
+            ><button class="product" data-reveal style="--i: 1" data-product="towel">
               <span class="product-img"
                 ><img src="art/towel.webp" width="627" height="627" alt="Pilates Hand Towel with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
@@ -437,7 +480,7 @@
                 ></span
               ><span class="product-line"><strong>Pilates Hand Towel</strong><span>$14</span></span
               ><span class="product-sub">Matcha stripe</span></button
-            ><button class="product" data-product="tee">
+            ><button class="product" data-reveal style="--i: 2" data-product="tee">
               <span class="product-img"
                 ><img src="art/tee.webp" width="627" height="627" alt="Pilates Club Tee with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
@@ -445,7 +488,7 @@
                 ></span
               ><span class="product-line"><strong>Pilates Club Tee</strong><span>$22</span></span
               ><span class="product-sub">Oat milk · Cotton</span></button
-            ><button class="product" data-product="tote">
+            ><button class="product" data-reveal style="--i: 3" data-product="tote">
               <span class="product-img"
                 ><img src="art/tote.webp" width="627" height="627" alt="Studio Canvas Tote with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
@@ -460,12 +503,12 @@
       </section>
       <section class="series section" id="series">
         <div class="wrap series-layout">
-          <div>
+          <div data-reveal>
             <div class="eyebrow chapter"><span></span> The Capy Club collection</div>
             <h2>More little<br /><em>adventures.</em></h2>
             <p>Capy and friends have a few more plans. They’ve penciled in a nap after each one.</p>
           </div>
-          <div class="issues">
+          <div class="issues" data-reveal>
             <details open>
               <summary>
                 <span class="issue-num">01</span><span>Pilates, Please<small>First book · Studio preview</small></span

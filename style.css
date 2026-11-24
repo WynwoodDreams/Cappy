@@ -1707,6 +1707,215 @@ dialog::backdrop {
   background: #f8e9b8;
   border-bottom: 1px solid #a6854d;
 }
+/* "Watch Capy color in": pinned scroll stage */
+:root {
+  --head-h: 78px;
+}
+.color-show {
+  position: relative;
+  background: #f3ead6 url(art/paper.png);
+  border-bottom: 1px solid #b4a78e;
+}
+.color-show.is-live {
+  height: 380svh;
+}
+.color-pin {
+  padding-block: clamp(54px, 5.7vw, 90px);
+}
+.is-live .color-pin {
+  position: sticky;
+  top: var(--head-h);
+  height: calc(100svh - var(--head-h));
+  display: flex;
+  align-items: center;
+  padding-block: 20px;
+  overflow: hidden;
+}
+.color-layout {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  align-items: center;
+  gap: 6%;
+}
+.color-copy h2 {
+  font-size: clamp(38px, 4.1vw, 63px);
+  letter-spacing: -0.064em;
+  line-height: 1.05;
+}
+.color-copy h2 em {
+  color: var(--rust);
+}
+.color-lede {
+  margin-top: 16px;
+  max-width: 360px;
+  color: #64574c;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.color-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+  min-height: 34px;
+}
+.step-num {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #8e947a;
+  border-radius: 50%;
+  font: 700 11px ui-monospace, "Courier New", monospace;
+}
+.step-text {
+  font: italic 400 clamp(19px, 1.7vw, 25px) var(--note);
+  line-height: 1.2;
+}
+.color-meter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  align-items: center;
+  max-width: 360px;
+  margin-top: 22px;
+  font: 700 11px ui-monospace, "Courier New", monospace;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #716044;
+}
+.meter-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.meter-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 4px;
+  background: #ddd0b6;
+  overflow: hidden;
+}
+.meter-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--rust);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.meter-pencil {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.meter-pencil i {
+  width: 14px;
+  height: 14px;
+  border-radius: 47% 54% 48% 46%;
+  border: 1.2px solid var(--ink);
+  background: var(--pencil, #9bcfdb);
+  transition: background 0.3s;
+}
+.color-cta {
+  margin-top: 24px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s,
+    transform 0.4s,
+    visibility 0.4s,
+    box-shadow 0.16s;
+}
+.is-done .color-cta {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.color-page {
+  position: relative;
+  justify-self: center;
+  transform: rotate(-1.6deg);
+}
+.color-page .tape {
+  left: 38%;
+  top: -12px;
+}
+.color-paper {
+  position: relative;
+  aspect-ratio: 669 / 831;
+  height: min(calc(100svh - var(--head-h) - 80px), 680px);
+  max-width: 100%;
+  background: white;
+  border: 1.6px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 6px 7px 0 #c7b89c;
+}
+.color-show:not(.is-live) .color-paper {
+  height: auto;
+  width: min(100%, 460px);
+}
+.color-fallback,
+.color-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+}
+.color-canvas {
+  visibility: hidden;
+}
+.is-ready .color-canvas {
+  visibility: visible;
+}
+.is-ready .color-fallback {
+  visibility: hidden;
+}
+.color-pencil {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13%;
+  translate: -25% -87.5%;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(2px 3px 0 #3b2d2633);
+  transition:
+    left 0.16s linear,
+    top 0.16s linear,
+    opacity 0.35s;
+}
+.is-coloring .color-pencil {
+  opacity: 1;
+}
+.color-pencil path {
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.color-pencil .pencil-body {
+  fill: var(--pencil, #9bcfdb);
+  transition: fill 0.25s;
+}
+.color-pencil .pencil-tip {
+  fill: #f1d7a8;
+}
+.color-pencil .pencil-end {
+  fill: #edb7c3;
+}
+
+/* Gentle entrances */
+[data-reveal] {
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+.reveals-ready [data-reveal]:not(.is-in) {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+}
 @media (min-width: 1560px) {
   .hero-grid {
     padding-block: 75px 85px;
@@ -2185,6 +2394,75 @@ dialog::backdrop {
     order: 2;
     width: 100%;
     gap: 16px;
+  }
+  :root {
+    --head-h: 65px;
+  }
+  .color-show.is-live {
+    height: 300svh;
+  }
+  .is-live .color-pin {
+    padding-block: 10px 14px;
+  }
+  .color-layout {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 14px;
+    width: 89.5%;
+  }
+  .color-copy .chapter,
+  .color-lede,
+  .color-copy h2 br {
+    display: none;
+  }
+  .color-copy h2 {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+  .color-copy h2 em:before {
+    content: " ";
+  }
+  .color-step {
+    margin-top: 8px;
+    min-height: 0;
+    gap: 9px;
+  }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+  .step-text {
+    font-size: 18px;
+  }
+  .color-meter {
+    margin-top: 10px;
+    max-width: none;
+    font-size: 10px;
+  }
+  .color-cta {
+    display: none;
+    margin-top: 10px;
+    width: 100%;
+  }
+  .is-done .color-cta {
+    display: inline-flex;
+  }
+  .is-done .color-meter {
+    display: none;
+  }
+  .color-paper {
+    height: min(calc(100svh - var(--head-h) - 220px), 62vh);
+    margin-top: 14px;
+  }
+  .color-page {
+    position: static;
+  }
+  .color-page .color-paper {
+    margin-inline: auto;
+  }
+  .color-page .tape {
+    display: none;
   }
 }
 @media (min-width: 391px) and (max-width: 480px) {
