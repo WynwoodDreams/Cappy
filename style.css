@@ -40,7 +40,7 @@
 }
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 18px;
+  scroll-padding-top: 86px;
 }
 body {
   margin: 0;
@@ -100,6 +100,10 @@ h3 {
 svg {
   display: block;
 }
+img {
+  max-width: 100%;
+  height: auto;
+}
 .sprites {
   position: absolute;
   width: 0;
@@ -142,8 +146,11 @@ svg {
 }
 .site-head {
   border-bottom: 1px solid #4f3d2d44;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 5;
+  background: color-mix(in srgb, var(--paper) 92%, transparent) url(art/paper.png);
+  backdrop-filter: blur(6px);
 }
 .header-inner {
   height: 78px;
@@ -469,7 +476,7 @@ figcaption {
   padding: 4px 2px;
 }
 .fig-no {
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 1px;
   border-right: 1px solid #bda991;
   padding-right: 9px;
@@ -481,7 +488,7 @@ figcaption {
   line-height: 1;
 }
 .nap-toggle {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   border: 1px solid #c6b497;
   border-radius: 15px;
@@ -797,7 +804,7 @@ figcaption {
   border: 1px solid var(--ink);
   border-radius: 3px;
   padding: 4px 7px;
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 1.1px;
 }
 .color-hint,
@@ -955,7 +962,7 @@ details[open] .fold .icon {
   color: var(--muted);
 }
 .shop-note {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.75px;
   margin-top: 23px;
   color: #74675b;
@@ -1067,6 +1074,17 @@ dialog::backdrop {
   background: #e2e7dce8;
   font: 700 17px var(--book);
 }
+.loading:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.loading .simple-btn {
+  font-family: var(--sans);
+  background: #fff9ec;
+}
 [hidden] {
   display: none !important;
 }
@@ -1081,8 +1099,8 @@ dialog::backdrop {
   margin-bottom: 17px;
 }
 .pager .icon-btn {
-  width: 27px;
-  height: 27px;
+  width: 34px;
+  height: 34px;
 }
 .pager .icon {
   width: 13px;
@@ -1136,7 +1154,7 @@ dialog::backdrop {
 }
 .pencil-name {
   margin-top: 11px;
-  font-size: 9px;
+  font-size: 11px;
   min-height: 14px;
 }
 .edit-actions {
@@ -1313,8 +1331,8 @@ dialog::backdrop {
   font-size: 12px;
 }
 .qty button {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   display: grid;
   place-items: center;
@@ -1327,7 +1345,7 @@ dialog::backdrop {
   height: 11px;
 }
 .remove {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   display: block;
   text-decoration: underline;
@@ -1391,7 +1409,7 @@ dialog::backdrop {
 }
 .export-panel small {
   margin-top: 4px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
 }
 .studio-retail {
@@ -1479,7 +1497,7 @@ dialog::backdrop {
   border: 1px solid #74634b;
 }
 .shelf-copy .eyebrow {
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 1px;
   color: #655844;
 }
@@ -1515,6 +1533,148 @@ dialog::backdrop {
 }
 .shelf-copy .text-link .icon {
   width: 13px;
+}
+/* Book actions, Amazon slot and "notify me" */
+.book-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 10px;
+  margin-bottom: 11px;
+}
+.shelf-copy .book-actions .btn {
+  margin: 0;
+}
+.btn-light {
+  background: #fff9ec;
+}
+.btn-sage {
+  background: var(--sage);
+}
+
+/* Studio inquiry form */
+.inquiry {
+  margin-top: clamp(40px, 5vw, 64px);
+  display: grid;
+  grid-template-columns: 0.8fr 1.4fr;
+  gap: 18px 6%;
+  padding: clamp(22px, 2.6vw, 36px);
+  background: #fff9e7 url(art/paper.png);
+  border: 1.2px solid #695842;
+  border-radius: 6px;
+  box-shadow: 4px 5px 0 #c7d3b7;
+}
+.inquiry-intro .eyebrow {
+  color: #776342;
+  margin-bottom: 12px;
+}
+.inquiry-intro h3 {
+  font-size: clamp(26px, 2.6vw, 38px);
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+}
+.inquiry-intro p {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4f5848;
+}
+.inquiry-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+.inquiry-fields .wide {
+  grid-column: 1 / -1;
+}
+.inquiry label,
+.notify-body label {
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.inquiry input,
+.inquiry select,
+.inquiry textarea,
+.notify-body input {
+  font: 400 15px var(--sans);
+  color: var(--ink);
+  background: #fffdf6;
+  border: 1.2px solid #b2a38b;
+  border-radius: 7px;
+  padding: 10px 11px;
+  min-height: 44px;
+  width: 100%;
+}
+.inquiry textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+.inquiry input:focus-visible,
+.inquiry select:focus-visible,
+.inquiry textarea:focus-visible,
+.notify-body input:focus-visible {
+  outline: 3px solid #176f63;
+  outline-offset: 1px;
+}
+[aria-invalid="true"] {
+  border-color: var(--rust) !important;
+  background: #fff1ea !important;
+}
+.inquiry-send {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+.form-status {
+  font-size: 14px;
+  color: #3f5a37;
+  font-weight: 700;
+}
+.form-status:empty {
+  display: none;
+}
+.form-status.error {
+  color: var(--rust);
+}
+
+/* Notify dialog */
+.notify-modal {
+  width: min(430px, 94%);
+}
+.notify-body {
+  display: grid;
+  gap: 12px;
+  padding: 34px 28px 28px;
+}
+.notify-body h2 {
+  font-size: clamp(30px, 3vw, 40px);
+}
+.notify-body p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #655545;
+}
+
+/* Footer links and no-JS note */
+.footer-links {
+  display: flex;
+  gap: 18px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.footer-links a:hover {
+  color: var(--rust);
+}
+.noscript {
+  margin: 0;
+  padding: 10px 5%;
+  text-align: center;
+  font-size: 14px;
+  background: #f8e9b8;
+  border-bottom: 1px solid #a6854d;
 }
 @media (min-width: 1560px) {
   .hero-grid {
@@ -1572,10 +1732,10 @@ dialog::backdrop {
     gap: 6%;
   }
   .fig-no {
-    font-size: 8px;
+    font-size: 9px;
   }
   .nap-toggle {
-    font-size: 9px;
+    font-size: 10px;
   }
   .hero h1 {
     margin-block: 19px 14px;
@@ -1588,6 +1748,12 @@ dialog::backdrop {
   }
 }
 @media (min-width: 681px) and (max-width: 920px) {
+  .inquiry {
+    grid-template-columns: 1fr;
+  }
+  .inquiry-send {
+    grid-column: auto;
+  }
   .primary-nav {
     gap: 17px;
   }
@@ -1678,7 +1844,7 @@ dialog::backdrop {
     padding: 0;
   }
   .book-label {
-    font-size: 9px;
+    font-size: 10px;
     padding: 5px 8px;
   }
   .hero h1 {
@@ -1709,7 +1875,7 @@ dialog::backdrop {
     font-size: 13px;
   }
   .fig-no {
-    font-size: 8px;
+    font-size: 9px;
   }
   .polaroid figcaption {
     min-height: 36px;
@@ -1753,7 +1919,7 @@ dialog::backdrop {
   }
   .chapter {
     margin-bottom: 8px;
-    font-size: 9px;
+    font-size: 10px;
   }
   .gallery {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1776,7 +1942,7 @@ dialog::backdrop {
   .page-tag {
     left: 6px;
     top: 6px;
-    font-size: 7px;
+    font-size: 9px;
     padding: 2px 4px;
   }
   .color-hint {
@@ -1819,7 +1985,7 @@ dialog::backdrop {
     padding: 4px 6px;
     bottom: 7px;
     right: 6px;
-    font-size: 9px;
+    font-size: 10px;
   }
   .product-sub {
     font-size: 11px;
@@ -1868,7 +2034,7 @@ dialog::backdrop {
     gap: 7px;
   }
   .pager > span {
-    font-size: 8px;
+    font-size: 10px;
   }
   .swatches {
     max-width: none;
@@ -1876,11 +2042,11 @@ dialog::backdrop {
     margin-top: 13px;
   }
   .swatch {
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
   }
   .pencil-name {
-    font-size: 8px;
+    font-size: 10px;
     margin-top: 7px;
     min-height: 10px;
   }
@@ -1962,13 +2128,32 @@ dialog::backdrop {
     font-size: 12px;
   }
   .shelf-copy .eyebrow {
-    font-size: 8px;
+    font-size: 10px;
   }
   .book-price {
     margin: 8px 0;
   }
   .shelf-copy h3 {
     font-size: 22px;
+  }
+  .inquiry {
+    grid-template-columns: 1fr;
+    margin-top: 32px;
+    padding: 20px;
+  }
+  .inquiry-fields {
+    grid-template-columns: 1fr;
+  }
+  .inquiry-send {
+    grid-column: auto;
+  }
+  .inquiry-send .btn {
+    width: 100%;
+  }
+  .footer-links {
+    order: 2;
+    width: 100%;
+    gap: 16px;
   }
 }
 @media (min-width: 391px) and (max-width: 480px) {

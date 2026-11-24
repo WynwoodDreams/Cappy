@@ -1,4 +1,16 @@
 "use strict";
+
+// ---------------------------------------------------------------------------
+// Site links. Fill these in as they go live; anything left empty stays hidden.
+// ---------------------------------------------------------------------------
+const SITE = {
+  amazonPilates: "", // Amazon listing for Pilates, Please
+  amazonNaps: "", // Amazon listing for Capy Takes a Napy (once it's out)
+  instagram: "", // e.g. "https://instagram.com/capyclub"
+  email: "", // studio inquiries and "notify me" requests open a pre-filled email to this address
+  formEndpoint: "", // optional: a form service URL (Formspree, Basin, etc.) that accepts JSON POSTs
+};
+
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 const icon = (name) => '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
@@ -47,8 +59,15 @@ $("#nap-toggle").addEventListener("click", (event) => {
   toggle.setAttribute("aria-pressed", String(active));
   toggle.setAttribute("aria-label", active ? "Turn off nap mode" : "Turn on nap mode");
   toggle.innerHTML = icon(active ? "sun" : "moon") + "<span>" + (active ? "Day mode" : "Nap mode") + "</span>";
-  $(".fig-name").textContent = active ? "Five more minutes…" : "Studio cover study";
+  $(".fig-name").textContent = active ? "Five more minutes…" : "At the front desk";
 });
+
+for (const link of $$("[data-link]")) {
+  const value = SITE[link.dataset.link];
+  if (!value) continue;
+  link.href = link.dataset.link === "email" ? "mailto:" + value : value;
+  link.hidden = false;
+}
 
 const books = {
   pilates: {
@@ -62,9 +81,9 @@ const books = {
   naps: {
     title: "Capy Takes a Napy",
     pages: [
-      { id: "picnic", title: "Picnic pause", page: 7 },
-      { id: "pool", title: "Poolside snooze", page: 9 },
-      { id: "hammock", title: "Hammock hours", page: 12 },
+      { id: "picnic", title: "Picnic pause" },
+      { id: "pool", title: "Poolside snooze" },
+      { id: "hammock", title: "Hammock hours" },
     ],
   },
 };
@@ -88,11 +107,42 @@ const studio = $("#studio");
 const canvas = $("#page-canvas");
 const ctx = canvas.getContext("2d");
 const sheets = new Map();
+const colorsKey = "capy-club-colors-v1";
 const colorsByScene = new Map(
   Object.values(books).flatMap((book) => book.pages.map((scene) => [scene.id, { fills: new Map(), undo: [] }])),
 );
+function loadColors() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(colorsKey) || "{}");
+    for (const [sceneId, pairs] of Object.entries(saved)) {
+      const state = colorsByScene.get(sceneId);
+      if (!state || !Array.isArray(pairs)) continue;
+      for (const pair of pairs) {
+        if (!Array.isArray(pair)) continue;
+        const [region, pencil] = pair;
+        if (Number.isInteger(region) && region > 0 && region < 65536 && pencils[pencil]) state.fills.set(region, pencil);
+      }
+    }
+  } catch {}
+}
+function saveColors() {
+  const data = {};
+  for (const [sceneId, state] of colorsByScene) if (state.fills.size) data[sceneId] = [...state.fills];
+  try {
+    localStorage.setItem(colorsKey, JSON.stringify(data));
+  } catch {}
+}
+loadColors();
+
 const spacePicker = $("#space-select");
 const keyboardControls = $(".keyboard");
+const loadingPanel = $("#paint-loading");
+const loadingText = $("#paint-loading-text");
+const retryButton = $("#retry-page");
+let hoverRegion = 0;
+let paintQueued = false;
+let exportUrl = "";
+
 function selectPencil(index) {
   selectedPencil = index;
   $$(".swatch").forEach((button, i) => {
@@ -100,6 +150,7 @@ function selectPencil(index) {
     button.innerHTML = i === index ? icon("check") : "";
   });
   $("#pencil-name").textContent = pencils[index][0];
+  if (hoverRegion) paint();
 }
 pencils.forEach(([name, color], index) => {
   const button = document.createElement("button");
@@ -146,15 +197,24 @@ async function readSheet(id) {
   return { original, ids, ordered, width, height };
 }
 const paintRGB = pencils.map(([, hex]) => [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16)));
-function paint(highlight = keyboardControls.open) {
+const keyboardTint = [145, 211, 215];
+
+// preview: show the keyboard-selected space, or a light wash of the current pencil on the hovered space.
+function paint({ preview = true } = {}) {
   if (!activeSheet) return;
   const { original, ids, width, height } = activeSheet;
   const output = new ImageData(new Uint8ClampedArray(original.data), width, height);
   const { fills, undo } = colorsByScene.get(scenes[sceneIndex].id);
-  const tint = highlight ? Number(spacePicker.value) : -1;
+  let tint = -1;
+  let tintColor = keyboardTint;
+  if (preview && keyboardControls.open) tint = Number(spacePicker.value);
+  else if (preview && hoverRegion) {
+    tint = hoverRegion;
+    tintColor = paintRGB[selectedPencil].map((channel) => Math.round(channel * 0.55 + 255 * 0.45));
+  }
   for (let pixel = 0; pixel < ids.length; pixel++) {
     const id = ids[pixel];
-    const color = id === tint ? [145, 211, 215] : paintRGB[fills.get(id)];
+    const color = id === tint ? tintColor : paintRGB[fills.get(id)];
     if (!color) continue;
     const offset = pixel * 4;
     const shade = original.data[offset] / 255;
@@ -164,14 +224,24 @@ function paint(highlight = keyboardControls.open) {
   $("#undo").disabled = !undo.length;
   $("#clear").disabled = !fills.size;
 }
+function queuePaint() {
+  if (paintQueued) return;
+  paintQueued = true;
+  requestAnimationFrame(() => {
+    paintQueued = false;
+    paint();
+  });
+}
 async function displayScene(index) {
   $("#export-panel").hidden = true;
   const version = ++paintVersion;
   sceneIndex = (index + scenes.length) % scenes.length;
   const scene = scenes[sceneIndex];
   activeSheet = null;
-  $("#paint-loading").hidden = false;
-  $("#paint-loading").textContent = "Opening page…";
+  hoverRegion = 0;
+  loadingPanel.hidden = false;
+  loadingText.textContent = "Opening page…";
+  retryButton.hidden = true;
   $("#scene-name").textContent = scene.title;
   $("#page-counter").textContent = sceneIndex + 1 + " of " + scenes.length;
   canvas.setAttribute("aria-label", scene.title + ", coloring page from " + currentBook.title);
@@ -188,28 +258,41 @@ async function displayScene(index) {
     sheet.ordered.forEach((value, rank) => options.append(new Option("Space " + (rank + 1), value)));
     spacePicker.append(options);
     paint();
-    $("#paint-loading").hidden = true;
+    loadingPanel.hidden = true;
     $("#save-art").disabled = false;
     $("#fill-space").disabled = false;
   } catch {
     sheets.delete(scene.id);
-    if (version === paintVersion)
-      $("#paint-loading").textContent = "Couldn’t open this page. Try another page, then return.";
+    if (version !== paintVersion) return;
+    loadingText.textContent = "Couldn’t open this page.";
+    retryButton.hidden = false;
   }
 }
+retryButton.addEventListener("click", () => displayScene(sceneIndex));
+
 function applyFill(id) {
   if (!activeSheet || !id) return;
   const state = colorsByScene.get(scenes[sceneIndex].id);
   if (state.fills.get(id) === selectedPencil) return;
   rememberPaint(state);
   state.fills.set(id, selectedPencil);
-  paint(false);
+  saveColors();
+  paint();
   $("#studio-status").textContent = "Filled space with " + pencils[selectedPencil][0];
 }
 function rememberPaint(state) {
   $("#export-panel").hidden = true;
   state.undo.push(new Map(state.fills));
   if (state.undo.length > 60) state.undo.shift();
+}
+function undo() {
+  const state = colorsByScene.get(scenes[sceneIndex].id);
+  if (!state.undo.length) return;
+  $("#export-panel").hidden = true;
+  state.fills = state.undo.pop();
+  saveColors();
+  paint();
+  $("#studio-status").textContent = "Undid last change";
 }
 for (const button of $$("[data-scene]"))
   button.addEventListener("click", () => {
@@ -222,50 +305,67 @@ for (const button of $$("[data-scene]"))
   });
 $("#prev").addEventListener("click", () => displayScene(sceneIndex - 1));
 $("#next").addEventListener("click", () => displayScene(sceneIndex + 1));
-canvas.addEventListener("click", (event) => {
-  if (!activeSheet) return;
+
+function regionAt(event) {
   const box = canvas.getBoundingClientRect();
-  const x = Math.min(
-    canvas.width - 1,
-    Math.max(0, Math.floor(((event.clientX - box.left) * canvas.width) / box.width)),
-  );
-  const y = Math.min(
-    canvas.height - 1,
-    Math.max(0, Math.floor(((event.clientY - box.top) * canvas.height) / box.height)),
-  );
-  applyFill(activeSheet.ids[y * canvas.width + x]);
+  const x = Math.min(canvas.width - 1, Math.max(0, Math.floor(((event.clientX - box.left) * canvas.width) / box.width)));
+  const y = Math.min(canvas.height - 1, Math.max(0, Math.floor(((event.clientY - box.top) * canvas.height) / box.height)));
+  return activeSheet.ids[y * canvas.width + x];
+}
+canvas.addEventListener("click", (event) => {
+  if (activeSheet) applyFill(regionAt(event));
+});
+canvas.addEventListener("pointermove", (event) => {
+  if (!activeSheet || event.pointerType !== "mouse" || keyboardControls.open) return;
+  const region = regionAt(event);
+  if (region === hoverRegion) return;
+  hoverRegion = region;
+  canvas.style.cursor = region ? "pointer" : "default";
+  queuePaint();
+});
+canvas.addEventListener("pointerleave", () => {
+  if (!hoverRegion) return;
+  hoverRegion = 0;
+  queuePaint();
+});
+studio.addEventListener("keydown", (event) => {
+  if (event.target.matches("input, select, textarea")) return;
+  if (event.key === "ArrowLeft") displayScene(sceneIndex - 1);
+  else if (event.key === "ArrowRight") displayScene(sceneIndex + 1);
+  else if (event.key.toLowerCase() === "z" && (event.metaKey || event.ctrlKey) && !event.shiftKey) undo();
+  else return;
+  event.preventDefault();
 });
 keyboardControls.addEventListener("toggle", () => paint());
 spacePicker.addEventListener("change", () => paint());
 $("#fill-space").addEventListener("click", () => applyFill(Number(spacePicker.value)));
-$("#undo").addEventListener("click", () => {
-  const state = colorsByScene.get(scenes[sceneIndex].id);
-  if (!state.undo.length) return;
-  $("#export-panel").hidden = true;
-  state.fills = state.undo.pop();
-  paint(false);
-  $("#studio-status").textContent = "Undid last change";
-});
+$("#undo").addEventListener("click", undo);
 $("#clear").addEventListener("click", () => {
   const state = colorsByScene.get(scenes[sceneIndex].id);
   if (!state.fills.size) return;
   rememberPaint(state);
   state.fills.clear();
-  paint(false);
+  saveColors();
+  paint();
+  $("#studio-status").textContent = "Cleared the page";
 });
 $("#save-art").addEventListener("click", () => {
   if (!activeSheet) return;
-  paint(false);
-  const url = canvas.toDataURL("image/png");
-  const name = "Capy-Club-" + scenes[sceneIndex].id + ".png";
-  const link = $("#download-page");
-  link.href = url;
-  link.download = name;
-  $("#export-image").src = url;
-  $("#export-panel").hidden = false;
-  $("#studio-status").textContent = "Your PNG is ready to download";
-  link.focus();
-  paint();
+  const sceneId = scenes[sceneIndex].id;
+  paint({ preview: false });
+  canvas.toBlob((blob) => {
+    paint();
+    if (!blob) return;
+    if (exportUrl) URL.revokeObjectURL(exportUrl);
+    exportUrl = URL.createObjectURL(blob);
+    const link = $("#download-page");
+    link.href = exportUrl;
+    link.download = "Capy-Club-" + sceneId + ".png";
+    $("#export-image").src = exportUrl;
+    $("#export-panel").hidden = false;
+    $("#studio-status").textContent = "Your PNG is ready to download";
+    link.focus();
+  }, "image/png");
 });
 
 const catalog = {
@@ -455,10 +555,10 @@ function renderBag(review = false) {
   const total = bag.reduce((sum, item) => sum + catalog[item.id].price * item.qty, 0);
   const subtotal = '<div class="total"><span>Subtotal</span><span>' + money(total) + "</span></div>";
   const actions = review
-    ? '<div class="receipt"><div class="eyebrow">Demo checkout</div><p>This is a preview of your items at sample prices. No order has been placed and no payment has been collected.</p></div><p><button class="text-link" data-edit>Back to bag</button></p>'
-    : '<button class="btn btn-coral" data-review>Preview checkout ' +
+    ? '<div class="receipt"><div class="eyebrow">Checkout opens at launch</div><p>Here’s your order at planned retail prices. Online checkout isn’t open yet, so nothing has been charged. Your bag is saved on this device for when it is.</p></div><p><button class="text-link" data-edit>Back to bag</button></p>'
+    : '<button class="btn btn-coral" data-review>Review order ' +
       icon("arrow") +
-      '</button><p class="bag-notice">Demo checkout · Sample prices</p>';
+      '</button><p class="bag-notice">Planned retail prices · Checkout opens at launch</p>';
   body.innerHTML = rows + subtotal + actions;
 }
 $("#bag-body").addEventListener("click", (event) => {
@@ -492,4 +592,85 @@ $("#bag-body").addEventListener("click", (event) => {
     $('#bag-body [data-index="' + index + '"][data-change="' + (target.dataset.change || "1") + '"]') ||
     $("#bag-body button, #bag-body a");
   if (next) next.focus();
+});
+
+// ---------------------------------------------------------------------------
+// Forms: studio inquiry and "notify me". Sent to SITE.formEndpoint if set,
+// otherwise opened as a pre-filled email to SITE.email, otherwise a preview.
+// ---------------------------------------------------------------------------
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+async function sendForm(subject, fields) {
+  if (SITE.formEndpoint) {
+    const response = await fetch(SITE.formEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ _subject: subject, ...fields }),
+    });
+    if (!response.ok) throw new Error("Form service returned " + response.status);
+    return "sent";
+  }
+  if (SITE.email) {
+    const body = Object.entries(fields)
+      .map(([key, value]) => key + ": " + value)
+      .join("\n");
+    location.href =
+      "mailto:" + SITE.email + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    return "mail";
+  }
+  return "preview";
+}
+function checkForm(form) {
+  let first = null;
+  for (const field of form.querySelectorAll("input, select, textarea")) {
+    const value = field.value.trim();
+    const bad = (field.required && !value) || (field.type === "email" && value && !emailPattern.test(value));
+    field.setAttribute("aria-invalid", String(bad));
+    if (bad && !first) first = field;
+  }
+  if (first) first.focus();
+  return !first;
+}
+function wireForm(form, subject, messages) {
+  const status = $(".form-status", form);
+  const submit = $('[type="submit"]', form);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    status.classList.remove("error");
+    if (!checkForm(form)) {
+      status.textContent = "Please fill in the highlighted fields.";
+      status.classList.add("error");
+      return;
+    }
+    const fields = Object.fromEntries(new FormData(form));
+    submit.disabled = true;
+    try {
+      const result = await sendForm(subject(), fields);
+      status.textContent = messages[result];
+      if (result === "sent") form.reset();
+    } catch {
+      status.textContent = "That didn’t go through. Please try again in a moment.";
+      status.classList.add("error");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+}
+wireForm($("#studio-inquiry"), () => "Studio inquiry: " + $('#studio-inquiry [name="studio"]').value.trim(), {
+  sent: "Thank you! We’ll be in touch within a few days.",
+  mail: "Your email app should open with your inquiry ready to send.",
+  preview: "Thanks! This preview doesn’t send inquiries yet, but your details look good.",
+});
+const notifyDialog = $("#notify-dialog");
+let notifyTitle = "";
+for (const button of $$("[data-notify]"))
+  button.addEventListener("click", () => {
+    notifyTitle = button.dataset.notify;
+    $("#notify-title").textContent = notifyTitle;
+    $(".form-status", notifyDialog).textContent = "";
+    showDialog(notifyDialog);
+  });
+wireForm($("#notify-form"), () => "Notify me: " + notifyTitle, {
+  sent: "You’re on the list. We’ll email you on release day.",
+  mail: "Your email app should open with the request ready to send.",
+  preview: "Thanks! This preview doesn’t collect emails yet, but sign-ups will work at launch.",
 });

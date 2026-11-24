@@ -9,6 +9,17 @@
       name="description"
       content="Meet Pilates, Please, the first Capy Club coloring book for Pilates studios. Color a sample and explore logo grip socks, towels, tees, and totes for your front desk."
     />
+    <!-- Social previews. Once the site has a domain, make og:image and og:url full https:// URLs. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Capy Club" />
+    <meta property="og:title" content="Pilates, Please · A Capy Club coloring book" />
+    <meta
+      property="og:description"
+      content="A coloring book for your Pilates studio’s front desk, plus Capy Club grip socks, towels, tees and totes."
+    />
+    <meta property="og:image" content="art/pilates-please.webp" />
+    <meta property="og:image:alt" content="The Pilates, Please coloring book on a studio counter with a towel and iced matcha." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preload" href="type/book.woff" as="font" type="font/woff" crossorigin />
     <link rel="preload" href="art/pilates-please.webp" as="image" />
@@ -80,6 +91,11 @@
       </symbol>
     </svg>
     <a class="skip" href="#main">Skip to content</a>
+    <noscript
+      ><p class="noscript">
+        Coloring pages and the shop need JavaScript. Everything else on this page still works without it.
+      </p></noscript
+    >
     <header class="site-head" id="top">
       <div class="wrap header-inner">
         <a class="brand" href="#top" aria-label="Capy Club home"
@@ -140,12 +156,15 @@
               <div class="print-window">
                 <img
                   src="art/pilates-please.webp"
-                  alt="A concept cover of Pilates, Please on a studio counter beside a striped towel and iced matcha."
+                  width="1420"
+                  height="947"
+                  fetchpriority="high"
+                  alt="The Pilates, Please coloring book on a studio counter beside a striped towel and iced matcha."
                 />
                 <div class="dream" aria-hidden="true"><span>z</span><span>z</span><span>z</span><i>✧</i><i>✦</i></div>
               </div>
               <figcaption>
-                <span class="fig-no">BOOK 01</span><span class="fig-name">Studio cover study</span
+                <span class="fig-no">BOOK 01</span><span class="fig-name">At the front desk</span
                 ><button class="nap-toggle" id="nap-toggle" aria-pressed="false" aria-label="Turn on nap mode">
                   <svg class="icon" aria-hidden="true"><use href="#i-moon" /></svg> <span>Nap mode</span>
                 </button>
@@ -184,7 +203,13 @@
           </div>
           <div class="shelf-spread">
             <article class="shelf-book">
-              <img loading="lazy" src="art/pilates-book.webp" alt="Paperback cover of Pilates, Please" />
+              <img
+                loading="lazy"
+                src="art/pilates-book.webp"
+                width="820"
+                height="820"
+                alt="Paperback cover of Pilates, Please"
+              />
               <div class="shelf-copy">
                 <span class="eyebrow">Book 01 · Studio edition</span>
                 <h3>Pilates, Please</h3>
@@ -193,9 +218,15 @@
                   good nap spot, too.
                 </p>
                 <div class="book-price"><strong>$12</strong> Paperback</div>
-                <button class="btn btn-coral" data-add-book="pilates-book" aria-label="Add Pilates, Please to bag">
-                  Add to bag</button
-                ><button
+                <div class="book-actions">
+                  <button class="btn btn-coral" data-add-book="pilates-book" aria-label="Add Pilates, Please to bag">
+                    Add to bag
+                  </button>
+                  <a class="btn btn-light" data-link="amazonPilates" hidden target="_blank" rel="noopener"
+                    >Buy on Amazon <svg class="icon" aria-hidden="true"><use href="#i-up" /></svg
+                  ></a>
+                </div>
+                <button
                   class="text-link"
                   data-book="pilates"
                   data-scene="0"
@@ -206,18 +237,30 @@
               </div>
             </article>
             <article class="shelf-book">
-              <img loading="lazy" src="art/nap-book.webp" alt="Paperback cover of Capy Takes a Napy" />
+              <img
+                loading="lazy"
+                src="art/nap-book.webp"
+                width="820"
+                height="820"
+                alt="Paperback cover of Capy Takes a Napy"
+              />
               <div class="shelf-copy">
-                <span class="eyebrow">Book 02 · In development</span>
+                <span class="eyebrow">Book 02 · Coming soon</span>
                 <h3>Capy Takes a Napy</h3>
                 <p>
                   A picnic blanket, a pool lounger, a hammock. Color along as Capy finds the perfect spot for a snooze
                   wherever the day leads.
                 </p>
-                <div class="book-price"><strong>$12</strong> Paperback</div>
-                <button class="btn btn-coral" data-add-book="nap-book" aria-label="Add Capy Takes a Napy to bag">
-                  Add to bag</button
-                ><button
+                <div class="book-price"><strong>$12</strong> Paperback · Not yet released</div>
+                <div class="book-actions">
+                  <button class="btn btn-sage" data-notify="Capy Takes a Napy">
+                    <svg class="icon" aria-hidden="true"><use href="#i-spark" /></svg> Notify me
+                  </button>
+                  <a class="btn btn-light" data-link="amazonNaps" hidden target="_blank" rel="noopener"
+                    >Buy on Amazon <svg class="icon" aria-hidden="true"><use href="#i-up" /></svg
+                  ></a>
+                </div>
+                <button
                   class="text-link"
                   data-book="naps"
                   data-scene="0"
@@ -228,7 +271,7 @@
               </div>
             </article>
           </div>
-          <p class="shop-note">Collection preview · Sample retail prices · Demo checkout</p>
+          <p class="shop-note">Preview prices · Online checkout opens at launch</p>
         </div>
       </section>
       <section class="sketch section" id="sketchbook">
@@ -244,7 +287,7 @@
             <button class="scene-card peach" data-scene="0">
               <span class="scene-window"
                 ><img
-                  src="art/reformer.webp"
+                  src="art/reformer.webp" width="669" height="831"
                   alt="Capy perched on a Pilates reformer in a sunlit studio"
                   loading="lazy"
                 /><span class="page-tag">SAMPLE 01</span
@@ -256,7 +299,7 @@
               ></span></button
             ><button class="scene-card sage" data-scene="1">
               <span class="scene-window"
-                ><img src="art/ring.webp" alt="Capy holding a Pilates ring on the studio mat" loading="lazy" /><span
+                ><img src="art/ring.webp" width="670" height="831" alt="Capy holding a Pilates ring on the studio mat" loading="lazy" /><span
                   class="page-tag"
                   >SAMPLE 02</span
                 ><span class="color-hint"
@@ -268,7 +311,7 @@
             ><button class="scene-card lilac" data-scene="2">
               <span class="scene-window"
                 ><img
-                  src="art/cooldown.webp"
+                  src="art/cooldown.webp" width="669" height="831"
                   alt="Capy napping by the cubbies beside a matcha and grip socks"
                   loading="lazy"
                 /><span class="page-tag">SAMPLE 03</span
@@ -310,6 +353,60 @@
             ></a>
           </div>
         </div>
+        <div class="wrap">
+          <form class="inquiry" id="studio-inquiry" novalidate>
+            <div class="inquiry-intro">
+              <div class="eyebrow">Wholesale &amp; studio orders</div>
+              <h3>Stock Capy at your studio.</h3>
+              <p>Tell us a little about your space and we’ll send wholesale pricing and a sample copy.</p>
+            </div>
+            <div class="inquiry-fields">
+              <label
+                >Studio name
+                <input name="studio" autocomplete="organization" required />
+              </label>
+              <label
+                >Your name
+                <input name="name" autocomplete="name" required />
+              </label>
+              <label
+                >Email
+                <input name="email" type="email" autocomplete="email" required />
+              </label>
+              <label
+                >City
+                <input name="city" autocomplete="address-level2" />
+              </label>
+              <label
+                >Copies to start
+                <select name="copies">
+                  <option>5–10</option>
+                  <option>10–25</option>
+                  <option>25+</option>
+                  <option>Not sure yet</option>
+                </select>
+              </label>
+              <label
+                >Interested in merch too?
+                <select name="merch">
+                  <option>Just the books</option>
+                  <option>Grip socks</option>
+                  <option>The full collection</option>
+                </select>
+              </label>
+              <label class="wide"
+                >Anything else?
+                <textarea name="note" rows="3"></textarea>
+              </label>
+            </div>
+            <div class="inquiry-send">
+              <button class="btn btn-coral" type="submit">
+                Send inquiry <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg>
+              </button>
+              <p class="form-status" role="status"></p>
+            </div>
+          </form>
+        </div>
       </section>
       <section class="store section" id="shop">
         <div class="wrap">
@@ -326,7 +423,7 @@
           <div class="products">
             <button class="product" data-product="socks">
               <span class="product-img"
-                ><img src="art/socks.webp" alt="Pilates Grip Socks with the Capy Club mascot" loading="lazy" /><span
+                ><img src="art/socks.webp" width="627" height="627" alt="Pilates Grip Socks with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
                   ><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg> Quick add</span
                 ></span
@@ -334,7 +431,7 @@
               ><span class="product-sub">Cream & matcha</span></button
             ><button class="product" data-product="towel">
               <span class="product-img"
-                ><img src="art/towel.webp" alt="Pilates Hand Towel with the Capy Club mascot" loading="lazy" /><span
+                ><img src="art/towel.webp" width="627" height="627" alt="Pilates Hand Towel with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
                   ><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg> Quick add</span
                 ></span
@@ -342,7 +439,7 @@
               ><span class="product-sub">Matcha stripe</span></button
             ><button class="product" data-product="tee">
               <span class="product-img"
-                ><img src="art/tee.webp" alt="Pilates Club Tee with the Capy Club mascot" loading="lazy" /><span
+                ><img src="art/tee.webp" width="627" height="627" alt="Pilates Club Tee with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
                   ><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg> Quick add</span
                 ></span
@@ -350,7 +447,7 @@
               ><span class="product-sub">Oat milk · Cotton</span></button
             ><button class="product" data-product="tote">
               <span class="product-img"
-                ><img src="art/tote.webp" alt="Studio Canvas Tote with the Capy Club mascot" loading="lazy" /><span
+                ><img src="art/tote.webp" width="627" height="627" alt="Studio Canvas Tote with the Capy Club mascot" loading="lazy" /><span
                   class="quick"
                   ><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg> Quick add</span
                 ></span
@@ -358,7 +455,7 @@
               ><span class="product-sub">Natural canvas · Moss handles</span>
             </button>
           </div>
-          <p class="shop-note">Studio collection preview · Sample retail prices</p>
+          <p class="shop-note">Studio collection preview · Prices shown are planned retail</p>
         </div>
       </section>
       <section class="series section" id="series">
@@ -424,7 +521,13 @@
           ><span class="brandmark"
             ><svg aria-hidden="true" viewBox="0 0 75 40"><use href="#i-capy" /></svg><span>Capy Club</span></span
           ></a
-        ><span>Coloring books &amp; Pilates goods</span><a class="back" href="#top">Back to top ↑</a>
+        ><span>Coloring books &amp; Pilates goods</span>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="#for-studios">Studio orders</a>
+          <a data-link="instagram" hidden target="_blank" rel="noopener">Instagram</a>
+          <a data-link="email" hidden>Email us</a>
+        </nav>
+        <a class="back" href="#top">Back to top ↑</a>
       </div>
     </footer>
     <dialog id="studio" aria-labelledby="scene-name" class="studio modal">
@@ -439,8 +542,11 @@
       </div>
       <div class="studio-layout">
         <div class="paper-stage">
-          <canvas id="page-canvas" width="747" height="960" role="img" aria-label="Coloring page"></canvas
-          ><span class="loading" id="paint-loading" role="status">Opening page…</span>
+          <canvas id="page-canvas" width="747" height="960" role="img" aria-label="Coloring page"></canvas>
+          <div class="loading" id="paint-loading" role="status">
+            <span id="paint-loading-text">Opening page…</span>
+            <button class="simple-btn" id="retry-page" hidden>Try again</button>
+          </div>
         </div>
         <div class="studio-tools">
           <div class="pager">
@@ -452,7 +558,7 @@
             </button>
           </div>
           <h2 id="scene-name">Reformer time</h2>
-          <p>Pick a pencil, then tap a space on the page to fill it.</p>
+          <p>Pick a pencil, then tap a space on the page to fill it. Your colors are saved on this device.</p>
           <div id="swatches" class="swatches" role="group" aria-label="Pencil colors"></div>
           <div class="pencil-name" id="pencil-name" aria-live="polite"></div>
           <div class="edit-actions">
@@ -497,7 +603,7 @@
           </fieldset>
           <button id="add-item" class="btn btn-coral">
             <svg class="icon" aria-hidden="true"><use href="#i-bag" /></svg> Add to bag</button
-          ><small>Sample product · Demo checkout</small>
+          ><small>Planned retail price · Checkout opens at launch</small>
         </div>
       </div>
     </dialog>
@@ -514,6 +620,24 @@
         <h2 id="bag-title">Your bag.</h2>
         <div id="bag-body"></div>
       </div>
+    </dialog>
+    <dialog id="notify-dialog" class="modal notify-modal" aria-labelledby="notify-title">
+      <button class="icon-btn floating-close" data-close aria-label="Close">
+        <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
+      </button>
+      <form class="notify-body" id="notify-form" novalidate>
+        <div class="eyebrow">
+          <svg class="icon" aria-hidden="true"><use href="#i-spark" /></svg> Coming soon
+        </div>
+        <h2 id="notify-title">Capy Takes a Napy</h2>
+        <p>Leave your email and we’ll let you know the day it’s ready. One note, no newsletter.</p>
+        <label
+          >Email
+          <input name="email" type="email" autocomplete="email" required />
+        </label>
+        <button class="btn btn-coral" type="submit">Notify me</button>
+        <p class="form-status" role="status"></p>
+      </form>
     </dialog>
   </body>
 </html>
