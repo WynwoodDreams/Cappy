@@ -298,7 +298,7 @@ img {
   font-size: clamp(73px, 7.8vw, 116px);
   line-height: 0.99;
   letter-spacing: -0.075em;
-  margin: 25px 0 17px;
+  margin: 25px 0 30px;
   position: relative;
   width: max-content;
   padding-right: 0.34em;
@@ -313,7 +313,7 @@ img {
   position: absolute;
   height: 0.06em;
   width: 75%;
-  bottom: 0.015em;
+  bottom: 0.1em;
   left: 13%;
   border-radius: 70% 50%;
   background: #e2b853;
@@ -422,6 +422,35 @@ img {
   padding: clamp(9px, 1vw, 14px) clamp(9px, 1vw, 14px) 0;
   box-shadow: 4px 5px 0 #583c2528;
   position: relative;
+  transform: perspective(1100px) translateY(var(--lift, 0)) rotate(var(--turn, 0deg)) rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+  transition:
+    transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.5s;
+}
+.art-under,
+.nap-seal,
+.tape {
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (hover: hover) {
+  .hero-art:hover .polaroid {
+    --lift: -8px;
+    --turn: -1.2deg;
+    box-shadow: 10px 14px 0 #583c251f;
+  }
+  .hero-art:hover .print-window img {
+    transform: scale(1.06) translate(var(--pan-x, 0px), var(--pan-y, 0px));
+  }
+  .hero-art:hover .art-under {
+    transform: rotate(-7deg) translate(-6px, 6px);
+  }
+  .hero-art:hover .nap-seal {
+    transform: rotate(22deg) scale(1.08);
+  }
+  .hero-art:hover .tape {
+    transform: rotate(-11deg) translateY(-3px);
+  }
 }
 .print-window {
   border: 1.3px solid #573c20;
@@ -437,7 +466,9 @@ img {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transition: filter 0.7s;
+  transition:
+    filter 0.7s,
+    transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .tape {
   position: absolute;
@@ -794,7 +825,7 @@ figcaption {
   object-position: center 58%;
 }
 .lilac .scene-window img {
-  object-position: center 48%;
+  object-position: center 78%;
 }
 .page-tag {
   position: absolute;
