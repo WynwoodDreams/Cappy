@@ -692,3 +692,283 @@ wireForm($("#notify-form"), () => "Notify me: " + notifyTitle, {
   mail: "Your email app should open with the request ready to send.",
   preview: "Thanks! This preview doesn’t collect emails yet, but sign-ups will work at launch.",
 });
+
+// ---------------------------------------------------------------------------
+// "Watch Capy color in": a pinned section that colors page 01 as you scroll.
+// Each space fills outward from where the pencil lands, with a grainy edge.
+// Fill plan: [region id from reformer-regions.png, pencil index], in drawing order.
+// ---------------------------------------------------------------------------
+const COLOR_SHOW = {
+  sceneId: "reformer",
+  done: "All done. Your turn.",
+  stages: [
+    { caption: "First, the window.", fills: [[3, 4], [4, 4], [7, 4], [8, 4], [10, 2], [9, 7], [17, 7], [14, 7], [13, 4], [12, 4], [11, 4], [18, 4], [21, 4], [22, 4], [30, 4], [20, 4], [31, 4], [2, 1]] },
+    { caption: "Then a little studio.", fills: [[1, 6], [15, 1], [19, 1], [23, 1], [26, 1], [27, 1], [25, 1], [28, 1], [6, 0], [5, 2]] },
+    { caption: "Now the reformer.", fills: [[36, 2], [42, 2], [55, 2], [53, 2], [56, 2], [35, 2], [29, 2], [32, 7], [60, 5], [64, 5], [61, 5], [43, 5], [44, 5], [57, 5], [37, 0], [50, 7], [52, 7], [46, 7], [39, 0], [45, 0], [49, 0], [33, 3], [34, 3], [38, 3], [40, 3], [41, 3], [51, 3], [54, 3], [47, 5], [48, 5], [58, 0], [59, 0], [62, 6], [63, 6]] },
+    { caption: "And finally, Capy.", fills: [[16, 5], [24, 6]] },
+  ],
+};
+(function colorShow() {
+  const section = $("#color-show");
+  if (!section) return;
+  const canvasEl = $(".color-canvas", section);
+  const context = canvasEl.getContext("2d");
+  const paper = $(".color-paper", section);
+  const pencilEl = $(".color-pencil", section);
+  const stepNum = $(".step-num", section);
+  const stepText = $(".step-text", section);
+  const countNow = $(".count-now", section);
+  const bar = $(".meter-bar > span", section);
+  const pencilNow = $(".pencil-now", section);
+  const plan = COLOR_SHOW.stages.flatMap((stage, s) => stage.fills.map(([id, pencil]) => ({ id, pencil, stage: s })));
+  $(".count-all", section).textContent = plan.length;
+  const animated = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (animated) section.classList.add("is-live"); // tall pinned layout; otherwise a plain section
+  const WINDOW = [0.02, 0.86]; // scroll progress over which the coloring happens
+  const SHIFT = 1048576; // 2^20, more than the pixel count, for packing sort keys
+
+  let model = null;
+  let building = null;
+  let queued = false;
+  let shownStep = -2;
+
+  async function build() {
+    if (!sheets.has(COLOR_SHOW.sceneId)) sheets.set(COLOR_SHOW.sceneId, readSheet(COLOR_SHOW.sceneId));
+    const { ids, original, width, height } = await sheets.get(COLOR_SHOW.sceneId);
+    // Bucket pixel indices by region in one pass.
+    const sizes = new Map();
+    for (let i = 0; i < ids.length; i++) if (ids[i]) sizes.set(ids[i], (sizes.get(ids[i]) || 0) + 1);
+    const buckets = new Map([...sizes].map(([id, size]) => [id, { list: new Uint32Array(size), n: 0 }]));
+    for (let i = 0; i < ids.length; i++) {
+      const bucket = buckets.get(ids[i]);
+      if (bucket) bucket.list[bucket.n++] = i;
+    }
+    const steps = plan
+      .filter((step) => buckets.has(step.id))
+      .map((step) => {
+        const list = buckets.get(step.id).list;
+        let sx = 0;
+        let sy = 0;
+        let minX = width;
+        let minY = height;
+        let maxX = 0;
+        let maxY = 0;
+        for (const i of list) {
+          const x = i % width;
+          const y = (i - x) / width;
+          sx += x;
+          sy += y;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+        // Start from the region pixel nearest its centre (the centre itself may fall outside a curved shape).
+        const cx = sx / list.length;
+        const cy = sy / list.length;
+        let origin = list[0];
+        let best = Infinity;
+        for (const i of list) {
+          const x = i % width;
+          const d = (x - cx) ** 2 + ((i - x) / width - cy) ** 2;
+          if (d < best) {
+            best = d;
+            origin = i;
+          }
+        }
+        const ox = origin % width;
+        const oy = (origin - ox) / width;
+        // Order pixels by distance from the origin, roughened so the edge looks penciled in.
+        const keys = new Float64Array(list.length);
+        list.forEach((i, k) => {
+          const x = i % width;
+          const y = (i - x) / width;
+          const grain = (((x * 73856093) ^ (y * 19349663)) >>> 0) % 1000 / 1000;
+          const wobble = Math.sin(x * 0.09) * Math.sin(y * 0.07);
+          const d = Math.hypot(x - ox, y - oy) + grain * 9 + wobble * 8;
+          keys[k] = Math.floor(Math.max(0, d) * 8) * SHIFT + i;
+        });
+        keys.sort();
+        const order = new Uint32Array(list.length);
+        for (let k = 0; k < keys.length; k++) order[k] = keys[k] % SHIFT;
+        return { ...step, order, filled: 0, ox, oy, box: [minX, minY, maxX, maxY], weight: Math.pow(list.length, 0.4) };
+      });
+    // Pacing, tuned so the share of the page colored grows steadily with the scroll:
+    // - start times: each space gets a slot sized by area^0.4, so tiny spaces aren't skipped past;
+    // - durations: at least OVERLAP slots (the next space starts before this one finishes), and for
+    //   big spaces like the wall and Capy, long enough to wash in alongside the smaller ones
+    //   (COVERAGE × their share of the page) instead of flooding in one jump.
+    // Rescaled so the final fill ends exactly at t = 1.
+    const OVERLAP = 2.4;
+    const COVERAGE = 1.6;
+    const total = steps.reduce((sum, step) => sum + step.weight, 0);
+    const pixels = steps.reduce((sum, step) => sum + step.order.length, 0);
+    let at = 0;
+    for (const step of steps) {
+      step.from = at / total;
+      step.span = Math.max((step.weight / total) * OVERLAP, (step.order.length / pixels) * COVERAGE);
+      at += step.weight;
+    }
+    const end = Math.max(...steps.map((step) => step.from + step.span));
+    for (const step of steps) {
+      step.from /= end;
+      step.span /= end;
+    }
+    canvasEl.width = width;
+    canvasEl.height = height;
+    const image = new ImageData(new Uint8ClampedArray(original.data), width, height);
+    context.putImageData(image, 0, 0);
+    model = { steps, image, original: original.data, width, height };
+    paper.classList.add("is-ready");
+    canvasEl.removeAttribute("aria-hidden");
+    canvasEl.setAttribute("role", "img");
+    canvasEl.setAttribute("aria-label", $(".color-fallback", section).alt);
+  }
+
+  // Scroll position mapped to 0–1 across the coloring window.
+  function target() {
+    if (!animated) return 1;
+    const rect = section.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height - innerHeight)));
+    return Math.min(1, Math.max(0, (p - WINDOW[0]) / (WINDOW[1] - WINDOW[0])));
+  }
+  const fillOf = (step, t) => {
+    const x = Math.min(1, Math.max(0, (t - step.from) / step.span));
+    return x * x * (3 - 2 * x); // smoothstep: each space eases in and out
+  };
+
+  function render(t) {
+    const { steps, image, original, width, height } = model;
+    const data = image.data;
+    let dirty = null;
+    let pencilStep = null;
+    let started = null;
+    for (const step of steps) {
+      const f = fillOf(step, t);
+      if (f > 0) started = step;
+      if (f > 0 && f < 1) pencilStep = step; // the most recently started space still being filled
+      const want = Math.round(f * step.order.length);
+      if (want === step.filled) continue;
+      const [r, g, b] = paintRGB[step.pencil];
+      if (want > step.filled) {
+        for (let k = step.filled; k < want; k++) {
+          const o = step.order[k] * 4;
+          const shade = original[o] / 255;
+          data[o] = shade * r;
+          data[o + 1] = shade * g;
+          data[o + 2] = shade * b;
+        }
+      } else {
+        for (let k = want; k < step.filled; k++) {
+          const o = step.order[k] * 4;
+          data[o] = original[o];
+          data[o + 1] = original[o + 1];
+          data[o + 2] = original[o + 2];
+        }
+      }
+      step.filled = want;
+      const [x0, y0, x1, y1] = step.box;
+      dirty = dirty
+        ? [Math.min(dirty[0], x0), Math.min(dirty[1], y0), Math.max(dirty[2], x1), Math.max(dirty[3], y1)]
+        : [x0, y0, x1, y1];
+    }
+    if (dirty) context.putImageData(image, 0, 0, dirty[0], dirty[1], dirty[2] - dirty[0] + 1, dirty[3] - dirty[1] + 1);
+
+    const done = t >= 1;
+    const step = pencilStep || started || steps[0];
+    // The pencil makes a small, slow loop around the spot it's filling.
+    const f = fillOf(step, t);
+    const swing = Math.min(10, Math.sqrt(step.order.length) / 8);
+    const px = step.ox + Math.cos(f * 9) * swing;
+    const py = step.oy + Math.sin(f * 7) * swing * 0.7;
+    pencilEl.style.left = ((px / width) * 100).toFixed(2) + "%";
+    pencilEl.style.top = ((py / height) * 100).toFixed(2) + "%";
+    pencilEl.style.setProperty("--pencil", pencils[step.pencil][1]);
+    section.classList.toggle("is-coloring", t > 0.002 && !done);
+    section.classList.toggle("is-done", done);
+
+    countNow.textContent = steps.filter((s) => s.filled === s.order.length).length;
+    bar.style.transform = "scaleX(" + t.toFixed(4) + ")";
+    pencilNow.textContent = pencils[step.pencil][0];
+    pencilNow.parentElement.style.setProperty("--pencil", pencils[step.pencil][1]);
+    const stage = done ? -1 : started ? step.stage : 0;
+    if (stage !== shownStep) {
+      shownStep = stage;
+      stepNum.textContent = done ? "✓" : String(stage + 1).padStart(2, "0");
+      stepText.textContent = done ? COLOR_SHOW.done : COLOR_SHOW.stages[stage].caption;
+    }
+  }
+
+  // The drawn progress glides toward the scroll position (about a 120ms ease), so wheel
+  // notches and trackpad flicks color smoothly instead of jumping.
+  let shown = -1;
+  let lastTime = 0;
+  function frame(now) {
+    queued = false;
+    if (!model) return;
+    const goal = target();
+    if (shown < 0) shown = goal;
+    const dt = lastTime ? Math.min(64, now - lastTime) : 16;
+    shown += (goal - shown) * (1 - Math.exp(-dt / 120));
+    if (Math.abs(goal - shown) < 0.0004) shown = goal;
+    render(shown);
+    if (shown !== goal) {
+      lastTime = now;
+      queue();
+    } else lastTime = 0;
+  }
+  function queue() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(frame);
+  }
+
+  // Load and prepare the page art only when the section is close to the screen.
+  const start = () => {
+    building ||= build()
+      .then(queue)
+      .catch(() => section.classList.add("is-failed"));
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          start();
+          io.disconnect();
+        }
+      },
+      { rootMargin: "900px 0px" },
+    );
+    io.observe(section);
+  } else start();
+  if (animated) {
+    addEventListener("scroll", queue, { passive: true });
+    addEventListener("resize", queue);
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// Gentle entrances: [data-reveal] elements rise in the first time they're seen.
+// Anything already on screen at load is shown at once, so nothing flickers.
+// ---------------------------------------------------------------------------
+(function reveals() {
+  const targets = $$("[data-reveal]");
+  if (!targets.length || !("IntersectionObserver" in window)) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (const el of targets) {
+    const r = el.getBoundingClientRect();
+    if (r.top < innerHeight && r.bottom > 0) el.classList.add("is-in");
+  }
+  document.documentElement.classList.add("reveals-ready");
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add("is-in");
+        io.unobserve(e.target);
+      }
+    },
+    { rootMargin: "0px 0px -8% 0px" },
+  );
+  targets.forEach((el) => el.classList.contains("is-in") || io.observe(el));
+})();
