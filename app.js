@@ -62,6 +62,24 @@ $("#nap-toggle").addEventListener("click", (event) => {
   $(".fig-name").textContent = active ? "Five more minutes…" : "At the front desk";
 });
 
+// Hero photo: tilt toward the cursor and pan the image slightly (mouse only, respects reduced motion).
+const heroArt = $(".hero-art");
+const polaroid = $("#polaroid");
+if (matchMedia("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)").matches) {
+  heroArt.addEventListener("pointermove", (event) => {
+    const box = heroArt.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - 0.5;
+    const y = (event.clientY - box.top) / box.height - 0.5;
+    polaroid.style.setProperty("--tilt-y", (x * 7).toFixed(2) + "deg");
+    polaroid.style.setProperty("--tilt-x", (-y * 6).toFixed(2) + "deg");
+    polaroid.style.setProperty("--pan-x", (-x * 10).toFixed(1) + "px");
+    polaroid.style.setProperty("--pan-y", (-y * 8).toFixed(1) + "px");
+  });
+  heroArt.addEventListener("pointerleave", () => {
+    for (const name of ["--tilt-x", "--tilt-y", "--pan-x", "--pan-y"]) polaroid.style.removeProperty(name);
+  });
+}
+
 for (const link of $$("[data-link]")) {
   const value = SITE[link.dataset.link];
   if (!value) continue;
