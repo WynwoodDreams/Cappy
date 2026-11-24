@@ -724,13 +724,12 @@ const COLOR_SHOW = {
   $(".count-all", section).textContent = plan.length;
   const animated = !matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (animated) section.classList.add("is-live"); // tall pinned layout; otherwise a plain section
-  const WINDOW = [0.03, 0.88]; // scroll progress over which the coloring happens
+  const WINDOW = [0.02, 0.86]; // scroll progress over which the coloring happens
   const SHIFT = 1048576; // 2^20, more than the pixel count, for packing sort keys
 
   let model = null;
   let building = null;
   let queued = false;
-  let lastProgress = -1;
   let shownStep = -2;
 
   async function build() {
@@ -792,15 +791,28 @@ const COLOR_SHOW = {
         keys.sort();
         const order = new Uint32Array(list.length);
         for (let k = 0; k < keys.length; k++) order[k] = keys[k] % SHIFT;
-        return { ...step, order, filled: 0, ox, oy, box: [minX, minY, maxX, maxY], weight: Math.sqrt(list.length) };
+        return { ...step, order, filled: 0, ox, oy, box: [minX, minY, maxX, maxY], weight: Math.pow(list.length, 0.4) };
       });
-    // Each space gets a slice of the scroll window sized by the square root of its area.
+    // Pacing, tuned so the share of the page colored grows steadily with the scroll:
+    // - start times: each space gets a slot sized by area^0.4, so tiny spaces aren't skipped past;
+    // - durations: at least OVERLAP slots (the next space starts before this one finishes), and for
+    //   big spaces like the wall and Capy, long enough to wash in alongside the smaller ones
+    //   (COVERAGE × their share of the page) instead of flooding in one jump.
+    // Rescaled so the final fill ends exactly at t = 1.
+    const OVERLAP = 2.4;
+    const COVERAGE = 1.6;
     const total = steps.reduce((sum, step) => sum + step.weight, 0);
+    const pixels = steps.reduce((sum, step) => sum + step.order.length, 0);
     let at = 0;
     for (const step of steps) {
       step.from = at / total;
+      step.span = Math.max((step.weight / total) * OVERLAP, (step.order.length / pixels) * COVERAGE);
       at += step.weight;
-      step.to = at / total;
+    }
+    const end = Math.max(...steps.map((step) => step.from + step.span));
+    for (const step of steps) {
+      step.from /= end;
+      step.span /= end;
     }
     canvasEl.width = width;
     canvasEl.height = height;
@@ -813,26 +825,33 @@ const COLOR_SHOW = {
     canvasEl.setAttribute("aria-label", $(".color-fallback", section).alt);
   }
 
-  function progress() {
+  // Scroll position mapped to 0–1 across the coloring window.
+  function target() {
     if (!animated) return 1;
     const rect = section.getBoundingClientRect();
-    return Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height - innerHeight)));
+    const p = Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height - innerHeight)));
+    return Math.min(1, Math.max(0, (p - WINDOW[0]) / (WINDOW[1] - WINDOW[0])));
   }
+  const fillOf = (step, t) => {
+    const x = Math.min(1, Math.max(0, (t - step.from) / step.span));
+    return x * x * (3 - 2 * x); // smoothstep: each space eases in and out
+  };
 
-  function render(p) {
-    const { steps, image, original, width } = model;
+  function render(t) {
+    const { steps, image, original, width, height } = model;
     const data = image.data;
-    const t = Math.min(1, Math.max(0, (p - WINDOW[0]) / (WINDOW[1] - WINDOW[0])));
     let dirty = null;
-    let active = -1;
-    steps.forEach((step, s) => {
-      const f = Math.min(1, Math.max(0, (t - step.from) / (step.to - step.from)));
-      const target = Math.round(f * step.order.length);
-      if (f > 0) active = s;
-      if (target === step.filled) return;
+    let pencilStep = null;
+    let started = null;
+    for (const step of steps) {
+      const f = fillOf(step, t);
+      if (f > 0) started = step;
+      if (f > 0 && f < 1) pencilStep = step; // the most recently started space still being filled
+      const want = Math.round(f * step.order.length);
+      if (want === step.filled) continue;
       const [r, g, b] = paintRGB[step.pencil];
-      if (target > step.filled) {
-        for (let k = step.filled; k < target; k++) {
+      if (want > step.filled) {
+        for (let k = step.filled; k < want; k++) {
           const o = step.order[k] * 4;
           const shade = original[o] / 255;
           data[o] = shade * r;
@@ -840,40 +859,39 @@ const COLOR_SHOW = {
           data[o + 2] = shade * b;
         }
       } else {
-        for (let k = target; k < step.filled; k++) {
+        for (let k = want; k < step.filled; k++) {
           const o = step.order[k] * 4;
           data[o] = original[o];
           data[o + 1] = original[o + 1];
           data[o + 2] = original[o + 2];
         }
       }
-      step.filled = target;
+      step.filled = want;
       const [x0, y0, x1, y1] = step.box;
       dirty = dirty
         ? [Math.min(dirty[0], x0), Math.min(dirty[1], y0), Math.max(dirty[2], x1), Math.max(dirty[3], y1)]
         : [x0, y0, x1, y1];
-    });
+    }
     if (dirty) context.putImageData(image, 0, 0, dirty[0], dirty[1], dirty[2] - dirty[0] + 1, dirty[3] - dirty[1] + 1);
 
     const done = t >= 1;
-    const step = steps[Math.max(0, active)];
-    // The pencil scribbles in a small loop around the spot it's filling.
-    const f = step ? Math.min(1, Math.max(0, (t - step.from) / (step.to - step.from))) : 0;
-    const swing = Math.min(14, Math.sqrt(step.order.length) / 6) * (1 - f * 0.4);
-    const px = step.ox + Math.cos(f * 26) * swing;
-    const py = step.oy + Math.sin(f * 19) * swing * 0.7;
+    const step = pencilStep || started || steps[0];
+    // The pencil makes a small, slow loop around the spot it's filling.
+    const f = fillOf(step, t);
+    const swing = Math.min(10, Math.sqrt(step.order.length) / 8);
+    const px = step.ox + Math.cos(f * 9) * swing;
+    const py = step.oy + Math.sin(f * 7) * swing * 0.7;
     pencilEl.style.left = ((px / width) * 100).toFixed(2) + "%";
-    pencilEl.style.top = ((py / model.height) * 100).toFixed(2) + "%";
+    pencilEl.style.top = ((py / height) * 100).toFixed(2) + "%";
     pencilEl.style.setProperty("--pencil", pencils[step.pencil][1]);
-    section.classList.toggle("is-coloring", t > 0 && !done);
+    section.classList.toggle("is-coloring", t > 0.002 && !done);
     section.classList.toggle("is-done", done);
 
-    const colored = steps.filter((s) => s.filled === s.order.length).length;
-    countNow.textContent = colored;
+    countNow.textContent = steps.filter((s) => s.filled === s.order.length).length;
     bar.style.transform = "scaleX(" + t.toFixed(4) + ")";
     pencilNow.textContent = pencils[step.pencil][0];
     pencilNow.parentElement.style.setProperty("--pencil", pencils[step.pencil][1]);
-    const stage = done ? -1 : active < 0 ? 0 : step.stage;
+    const stage = done ? -1 : started ? step.stage : 0;
     if (stage !== shownStep) {
       shownStep = stage;
       stepNum.textContent = done ? "✓" : String(stage + 1).padStart(2, "0");
@@ -881,18 +899,28 @@ const COLOR_SHOW = {
     }
   }
 
-  function update() {
+  // The drawn progress glides toward the scroll position (about a 120ms ease), so wheel
+  // notches and trackpad flicks color smoothly instead of jumping.
+  let shown = -1;
+  let lastTime = 0;
+  function frame(now) {
     queued = false;
     if (!model) return;
-    const p = progress();
-    if (Math.abs(p - lastProgress) < 0.0001) return;
-    lastProgress = p;
-    render(p);
+    const goal = target();
+    if (shown < 0) shown = goal;
+    const dt = lastTime ? Math.min(64, now - lastTime) : 16;
+    shown += (goal - shown) * (1 - Math.exp(-dt / 120));
+    if (Math.abs(goal - shown) < 0.0004) shown = goal;
+    render(shown);
+    if (shown !== goal) {
+      lastTime = now;
+      queue();
+    } else lastTime = 0;
   }
   function queue() {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(update);
+    requestAnimationFrame(frame);
   }
 
   // Load and prepare the page art only when the section is close to the screen.
@@ -915,10 +943,7 @@ const COLOR_SHOW = {
   } else start();
   if (animated) {
     addEventListener("scroll", queue, { passive: true });
-    addEventListener("resize", () => {
-      lastProgress = -1;
-      queue();
-    });
+    addEventListener("resize", queue);
   }
 })();
 

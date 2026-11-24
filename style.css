@@ -1717,7 +1717,7 @@ dialog::backdrop {
   border-bottom: 1px solid #b4a78e;
 }
 .color-show.is-live {
-  height: 380svh;
+  height: 260svh;
 }
 .color-pin {
   padding-block: clamp(54px, 5.7vw, 90px);
@@ -1844,7 +1844,7 @@ dialog::backdrop {
 .color-paper {
   position: relative;
   aspect-ratio: 669 / 831;
-  height: min(calc(100svh - var(--head-h) - 80px), 680px);
+  height: min(calc(100svh - var(--head-h) - 130px), 560px);
   max-width: 100%;
   background: white;
   border: 1.6px solid var(--ink);
@@ -1881,10 +1881,7 @@ dialog::backdrop {
   opacity: 0;
   pointer-events: none;
   filter: drop-shadow(2px 3px 0 #3b2d2633);
-  transition:
-    left 0.16s linear,
-    top 0.16s linear,
-    opacity 0.35s;
+  transition: opacity 0.35s;
 }
 .is-coloring .color-pencil {
   opacity: 1;
@@ -2399,7 +2396,7 @@ dialog::backdrop {
     --head-h: 65px;
   }
   .color-show.is-live {
-    height: 300svh;
+    height: 220svh;
   }
   .is-live .color-pin {
     padding-block: 10px 14px;
@@ -2452,7 +2449,7 @@ dialog::backdrop {
     display: none;
   }
   .color-paper {
-    height: min(calc(100svh - var(--head-h) - 220px), 62vh);
+    height: min(calc(100svh - var(--head-h) - 250px), 50vh);
     margin-top: 14px;
   }
   .color-page {
